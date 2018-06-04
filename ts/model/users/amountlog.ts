@@ -177,3 +177,14 @@ export async function getWithdraw(sequelize: Sequelize,start:string, length:stri
     `, { type: 'SELECT' }) as any[]
     return res
 }
+//按指定时间查询零钱流水 write by wyho
+export async function getBalanceorpoints(sequelize: Sequelize,option:string,useruuid: string, timestamps: string) {
+    let res = await sequelize.query(`
+        select a.points,a.amount from users.amountlog a
+        where a.useruuid='${useruuid}'
+        and a.mode='${option}'
+        and a.amount is not null
+        and a.amount >0
+    `, { type: 'SELECT' }) as any[]
+    return res
+}

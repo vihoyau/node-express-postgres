@@ -22,6 +22,7 @@ const logindao_1 = require("../../redis/logindao");
 const validator_1 = require("../../lib/validator");
 const system_1 = require("../../model/system/system");
 const users_2 = require("../../model/users/users");
+const coupon_1 = require("../../model/mall/coupon");
 // import { updatePrizeInfo, findAllPrize } from "../../model/mall/prize"
 const validator_2 = require("./validator");
 const response_1 = require("../../lib/response");
@@ -499,8 +500,12 @@ function updateOrderState(orderuuids, fee_type, useruuid) {
                 ordersTotal_fee += order.real_fee + order.postage;
                 ordersgoodpoint += order.goodpoint;
                 let usergoodsuuid = order.usergoodsuuid;
+                //十金所有商城的优惠券不被使用，等过期 write by wyho
                 if (usergoodsuuid) {
-                    yield usercoupon_1.updateCouponState(usergoodsuuid, 'used'); //修改优惠券为已使用
+                    let usercoupon = yield coupon_1.findByPrimary(usergoodsuuid);
+                    if (usercoupon.business !== "十金商城所有") {
+                        yield usercoupon_1.updateCouponState(usergoodsuuid, 'used'); //修改优惠券为已使用
+                    }
                 }
             }
             yield users_ext_1.exchange(useruuid, { points: ordersgoodpoint, balance: 0 }); //减积分
@@ -643,6 +648,9 @@ function usedCoupon(coupons, businessmen) {
         if (coupons != []) {
             for (let k = 0; k < coupons.length; k++) { //
                 if (coupons[k].business === businessmen[0].businessmen) {
+                    return coupons[k].uuid;
+                }
+                else if (coupons[k].business === "十金商城所有") { //多加一种全平台能用，券在过期后才能被使用掉，否则券一直被复用
                     return coupons[k].uuid;
                 }
             }

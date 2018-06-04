@@ -537,3 +537,9 @@
 20180531 17:33:20 - error:  Error: ENOENT: no such file or directory, open '/Users/wyho/D/project/ads-test/cert/rootca.pem'
 20180531 17:33:20 - error:  Error: ENOENT: no such file or directory, open '/Users/wyho/D/project/ads-test/cert/rootca.pem'
 20180531 17:33:20 - error:  Error: ENOENT: no such file or directory, open '/Users/wyho/D/project/ads-test/cert/rootca.pem'
+20180604 16:14:11 - error: startPay role "wyho" does not exist
+20180604 16:14:41 - error: startPay role "wyho" does not exist
+20180604 16:15:11 - error: startPay role "wyho" does not exist
+20180604 16:15:41 - error: startPay role "wyho" does not exist
+20180604 16:16:11 - error: startPay role "wyho" does not exist
+20180604 17:30:49 - error: 用户1f009f7a-db7d-4448-8dcc-a971dc29c466===>exp+0===>points+0==>balance+0

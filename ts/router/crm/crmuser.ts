@@ -8,7 +8,7 @@ import { findByUsername, findByPrimary, findGoodsOW, findMallCount, findByPasswo
 import { resetAppUserState, getAllUsers, getAllUserPoints, /*getAll,*/ deleteUser, getCount } from "../../model/users/users"
 import { findByPrimary as finduserext, updateOpenid } from "../../model/users/users_ext"
 import { checkPassword, md5sum } from "../../lib/utils"
-import { getPointCountByUserAndBytime, getBalanceCountByUserAndBytime } from "../../model/users/amountlog"
+import { getBalanceorpoints } from "../../model/users/amountlog"
 //import { timeformat } from "./puton";
 import { timestamps } from "../../config/winston";
 
@@ -127,10 +127,10 @@ router.get("/goodsOW", checkLogin, async function (req: Request, res: Response, 
 })
 
 /**
- *app用户信息管理
+ *重构  app用户信息管理 write by wyho
  */
-router.get('/userInfo', checkLogin, async function (req: Request, res: Response, next: NextFunction) {
-    let { start, length, draw, search, pointsort, balancesort, balanceorpoint} = (req as any).query
+router.post('/userInfoOption', checkLogin, async function (req: Request, res: Response, next: NextFunction) {
+    let { start, length, draw, search, pointsort, balancesort,option} = ( req as any).body
     try {
         let searchdata = (search as any).value
         validateCgi({ start, length, searchdata }, crmuserValidator.pagination)
@@ -149,6 +149,7 @@ router.get('/userInfo', checkLogin, async function (req: Request, res: Response,
         //     r.balance = r.balance / 100
         //     r.total_balance = r.total_balance / 100
         // })
+        
         for (let i = 0; i < appuser.length; i++) {
             let r= appuser[i]
             let uuid = r.uuid
@@ -157,32 +158,44 @@ router.get('/userInfo', checkLogin, async function (req: Request, res: Response,
             let timestamp: any = timestamps(r.created)
             r.balance = r.balance / 100
             r.total_balance = r.total_balance / 100
-            let amount
-            // switch (sourceoption) {
-            //     case 'answer': logs[i].mode = '答题'; break;
-            //     case 'invite': logs[i].mode = '邀请'; break;
-            //     case 'lottery': logs[i].mode = '抽奖'; break;
-            //     case 'collection': logs[i].mode = '集道具'; break;
-            //     case 'reward': logs[i].mode = '打赏'; break;
-            //     case 'recharge': logs[i].mode = '充值'; break;
-            //     case 'withdraw': logs[i].mode = '提现'; break;
-            //     default: break;
-            // }
-            if (balanceorpoint === "balance") {
-                //获取零钱数据
-                 amount = await getBalanceCountByUserAndBytime(req.app.locals.sequelize, uuid, timestamp)
-            } else {
-                //获取积分数据
-                 amount = await getPointCountByUserAndBytime(req.app.locals.sequelize, uuid, timestamp)
-            }
-            r.amount=amount
+            
+                //获取零钱积分数据
+             let   getpointsandamount:any= await getBalanceorpoints(req.app.locals.sequelize,option, uuid, timestamp)
+             r.points=getpointsandamount.points
+             r.amountlog=getpointsandamount.amountlog
         }
         return sendOK(res, { appuser: appuser, draw: draw, recordsFiltered: recordsFiltered })
     } catch (e) {
         e.info(se, res, e)
     }
 })
+/**
+ *app用户信息管理
+ */
+router.get('/userInfo', checkLogin, async function (req: Request, res: Response, next: NextFunction) {
+    let { start, length, draw, search, pointsort, balancesort } = req.query
+    try {
+        let searchdata = (search as any).value
+        validateCgi({ start, length, searchdata }, crmuserValidator.pagination)
+        //validateCgi({ pointsort: pointsort, balancesort: balancesort }, crmuserValidator.sort)
+        let recordsFiltered = await getCount(req.app.locals.sequelize, searchdata)
+        if (pointsort === undefined || pointsort === null)
+            pointsort = ''
 
+        if (balancesort === undefined || balancesort === null)
+            balancesort = ''
+
+        let appuser = await getAllUsers(req.app.locals.sequelize, searchdata, parseInt(start), parseInt(length), pointsort, balancesort)
+        appuser.forEach(r => {
+            r.created = timestamps(r.created)
+            r.balance = r.balance / 100
+            r.total_balance = r.total_balance / 100
+        })
+        return sendOK(res, { appuser: appuser, draw: draw, recordsFiltered: recordsFiltered })
+    } catch (e) {
+        e.info(se, res, e)
+    }
+})
 /**
  *微信解绑
  */

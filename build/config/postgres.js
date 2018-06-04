@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.pgOpt = {
-    database: "wyho",
-    username: "wyho",
-    password: "",
+    database: "postgres",
+    username: "postgres",
+    password: "123456ßß",
     options: {
         dialect: "postgres",
         //host: "192.168.0.210",

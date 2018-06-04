@@ -137,11 +137,11 @@ exports.router.get("/goodsOW", logindao_1.checkLogin, function (req, res, next) 
     });
 });
 /**
- *app用户信息管理
+ *重构  app用户信息管理 write by wyho
  */
-exports.router.get('/userInfo', logindao_1.checkLogin, function (req, res, next) {
+exports.router.post('/userInfoOption', logindao_1.checkLogin, function (req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
-        let { start, length, draw, search, pointsort, balancesort, balanceorpoint } = req.query;
+        let { start, length, draw, search, pointsort, balancesort, option } = req.body;
         try {
             let searchdata = search.value;
             validator_2.validateCgi({ start, length, searchdata }, validator_1.crmuserValidator.pagination);
@@ -166,27 +166,39 @@ exports.router.get('/userInfo', logindao_1.checkLogin, function (req, res, next)
                 let timestamp = winston_1.timestamps(r.created);
                 r.balance = r.balance / 100;
                 r.total_balance = r.total_balance / 100;
-                let amount;
-                // switch (sourceoption) {
-                //     case 'answer': logs[i].mode = '答题'; break;
-                //     case 'invite': logs[i].mode = '邀请'; break;
-                //     case 'lottery': logs[i].mode = '抽奖'; break;
-                //     case 'collection': logs[i].mode = '集道具'; break;
-                //     case 'reward': logs[i].mode = '打赏'; break;
-                //     case 'recharge': logs[i].mode = '充值'; break;
-                //     case 'withdraw': logs[i].mode = '提现'; break;
-                //     default: break;
-                // }
-                if (balanceorpoint === "balance") {
-                    //获取零钱数据
-                    amount = yield amountlog_1.getBalanceCountByUserAndBytime(req.app.locals.sequelize, uuid, timestamp);
-                }
-                else {
-                    //获取积分数据
-                    amount = yield amountlog_1.getPointCountByUserAndBytime(req.app.locals.sequelize, uuid, timestamp);
-                }
-                r.amount = amount;
+                //获取零钱积分数据
+                let getpointsandamount = yield amountlog_1.getBalanceorpoints(req.app.locals.sequelize, option, uuid, timestamp);
+                r.points = getpointsandamount.points;
+                r.amountlog = getpointsandamount.amountlog;
             }
+            return response_1.sendOK(res, { appuser: appuser, draw: draw, recordsFiltered: recordsFiltered });
+        }
+        catch (e) {
+            e.info(response_1.sendError, res, e);
+        }
+    });
+});
+/**
+ *app用户信息管理
+ */
+exports.router.get('/userInfo', logindao_1.checkLogin, function (req, res, next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let { start, length, draw, search, pointsort, balancesort } = req.query;
+        try {
+            let searchdata = search.value;
+            validator_2.validateCgi({ start, length, searchdata }, validator_1.crmuserValidator.pagination);
+            //validateCgi({ pointsort: pointsort, balancesort: balancesort }, crmuserValidator.sort)
+            let recordsFiltered = yield users_1.getCount(req.app.locals.sequelize, searchdata);
+            if (pointsort === undefined || pointsort === null)
+                pointsort = '';
+            if (balancesort === undefined || balancesort === null)
+                balancesort = '';
+            let appuser = yield users_1.getAllUsers(req.app.locals.sequelize, searchdata, parseInt(start), parseInt(length), pointsort, balancesort);
+            appuser.forEach(r => {
+                r.created = winston_1.timestamps(r.created);
+                r.balance = r.balance / 100;
+                r.total_balance = r.total_balance / 100;
+            });
             return response_1.sendOK(res, { appuser: appuser, draw: draw, recordsFiltered: recordsFiltered });
         }
         catch (e) {

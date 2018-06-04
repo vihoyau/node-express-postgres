@@ -214,4 +214,18 @@ function getWithdraw(sequelize, start, length, useruuid, starttime, endtime) {
     });
 }
 exports.getWithdraw = getWithdraw;
+//按指定时间查询零钱流水 write by wyho
+function getBalanceorpoints(sequelize, option, useruuid, timestamps) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let res = yield sequelize.query(`
+        select a.points,a.amount from users.amountlog a
+        where a.useruuid='${useruuid}'
+        and a.mode='${option}'
+        and a.amount is not null
+        and a.amount >0
+    `, { type: 'SELECT' });
+        return res;
+    });
+}
+exports.getBalanceorpoints = getBalanceorpoints;
 //# sourceMappingURL=amountlog.js.map
