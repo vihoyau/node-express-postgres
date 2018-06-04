@@ -17,6 +17,7 @@ import { LoginInfo } from "../../redis/logindao"
 import { validateCgi } from "../../lib/validator"
 import { findByName } from "../../model/system/system"
 import { addPointAndCashlottery } from "../../model/users/users"
+import { findByPrimary as findCouponInfo} from "../../model/mall/coupon"
 // import { updatePrizeInfo, findAllPrize } from "../../model/mall/prize"
 import { shoppingCartValidator, ordersValidator } from "./validator"
 import { sendOK, sendError as se, sendNotFound, sendErrMsg } from "../../lib/response"
@@ -472,9 +473,13 @@ export async function updateOrderState(orderuuids: any, fee_type: any, useruuid:
             ordersTotal_fee += order.real_fee + order.postage
             ordersgoodpoint += order.goodpoint
             let usergoodsuuid = order.usergoodsuuid
-            if (usergoodsuuid) {
-                await updateCouponState(usergoodsuuid, 'used')//修改优惠券为已使用
+           //十金所有商城的优惠券不被使用，等过期 write by wyho
+           if (usergoodsuuid) {
+            let usercoupon=await findCouponInfo(usergoodsuuid)
+            if(usercoupon.business!=="十金商城所有"){
+            await updateCouponState(usergoodsuuid, 'used')//修改优惠券为已使用
             }
+        }
         }
         await exchange(useruuid, { points: ordersgoodpoint, balance: 0 })//减积分
         for (let i = 0; i < uuids.length; i++) {
@@ -607,6 +612,8 @@ async function usedCoupon(coupons: any[], businessmen: any[]) {
     if (coupons != []) {
         for (let k = 0; k < coupons.length; k++) {//
             if (coupons[k].business === businessmen[0].businessmen) {
+                return coupons[k].uuid
+            }else if(coupons[k].business ==="十金商城所有"){ //多加一种全平台能用，券在过期后才能被使用掉，否则券一直被复用
                 return coupons[k].uuid
             }
         }
