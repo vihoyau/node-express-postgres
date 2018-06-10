@@ -5,10 +5,10 @@ import { sendOK, sendError as se, sendNoPerm, sendNotFound, sendErrMsg } from ".
 import { setLoginAsync, delLogin, LoginInfo } from "../../redis/logindao"
 import { Router, Request, Response, NextFunction } from "express"
 import { findByUsername, findByPrimary, findGoodsOW, findMallCount, findByPassword, findMallUserInfo, modifiedPassword, findGoodsOWUserInfo, findByUsernames, findGoodsOWCount, insertCrmUser, findAdminrwUserInfo, resetPassword, findAdminrwCount, resetState, inserMgruuids, deleteCrmuser, findUserInfo, findCount, findByAppUsername, new_insertCrmUser } from "../../model/ads/crmuser"
-import { resetAppUserState, getAllUsers, getAllUserPoints, /*getAll,*/ deleteUser, getCount } from "../../model/users/users"
+import { resetAppUserState, getAllUsersinfo, getAllUserPoints, /*getAll,*/ deleteUser, getCount,getAllUsers } from "../../model/users/users"
 import { findByPrimary as finduserext, updateOpenid } from "../../model/users/users_ext"
 import { checkPassword, md5sum } from "../../lib/utils"
-import { getBalanceorpoints } from "../../model/users/amountlog"
+
 //import { timeformat } from "./puton";
 import { timestamps } from "../../config/winston";
 
@@ -129,40 +129,29 @@ router.get("/goodsOW", checkLogin, async function (req: Request, res: Response, 
 /**
  *重构  app用户信息管理 write by wyho
  */
-router.post('/userInfoOption', checkLogin, async function (req: Request, res: Response, next: NextFunction) {
-    let { start, length, draw, search, pointsort, balancesort,option} = ( req as any).body
+router.get('/userInfoOption', checkLogin, async function (req: Request, res: Response, next: NextFunction) {
+    let { start, length, draw, search,pointsort, balancesort, option } = req.query
     try {
         let searchdata = (search as any).value
         validateCgi({ start, length, searchdata }, crmuserValidator.pagination)
-        //validateCgi({ pointsort: pointsort, balancesort: balancesort }, crmuserValidator.sort)
+        if (searchdata === undefined || searchdata === null) {
+            searchdata = ''
+        }
         let recordsFiltered = await getCount(req.app.locals.sequelize, searchdata)
         if (pointsort === undefined || pointsort === null)
-            pointsort = ''
-
+            pointsort = '' 
         if (balancesort === undefined || balancesort === null)
             balancesort = ''
-
-        let appuser = await getAllUsers(req.app.locals.sequelize, searchdata, parseInt(start), parseInt(length), pointsort, balancesort)
-        //循环加created等字段到appuser
-        // appuser.forEach(r => {
-        //     r.created = timestamps(r.created)
-        //     r.balance = r.balance / 100
-        //     r.total_balance = r.total_balance / 100
-        // })
-        
-        for (let i = 0; i < appuser.length; i++) {
-            let r= appuser[i]
-            let uuid = r.uuid
+        let appuser
+        if(option==='all'){
+            appuser = await getAllUsers(req.app.locals.sequelize, searchdata, parseInt(start), parseInt(length), pointsort, balancesort)
+            appuser.forEach(r => {
             r.created = timestamps(r.created)
-            //拿取时间戳
-            let timestamp: any = timestamps(r.created)
-            r.balance = r.balance / 100
+            r.optionamountlog = r.optionamountlog / 100
             r.total_balance = r.total_balance / 100
-            
-                //获取零钱积分数据
-             let   getpointsandamount:any= await getBalanceorpoints(req.app.locals.sequelize,option, uuid, timestamp)
-             r.points=getpointsandamount.points
-             r.amountlog=getpointsandamount.amountlog
+        })
+        }else{
+            appuser = await getAllUsersinfo(req.app.locals.sequelize, searchdata, parseInt(start), parseInt(length), pointsort, balancesort,option)
         }
         return sendOK(res, { appuser: appuser, draw: draw, recordsFiltered: recordsFiltered })
     } catch (e) {

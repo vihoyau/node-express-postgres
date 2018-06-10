@@ -84,7 +84,7 @@ export async function getPointCountByUser(sequelize: Sequelize, useruuid: string
         and a.points is not null
         and a.points >0
     `, { type: 'SELECT' }) as any[]
-    return res[0].count
+    return parseInt(res[0].sum)
 }
 //按模糊时间查询零钱流水
 export async function getBalanceCountByUser(sequelize: Sequelize, useruuid: string, starttime: string, endtime: string) {
@@ -122,67 +122,186 @@ export async function getBalanceCountByUserAndBytime(sequelize: Sequelize, useru
 }
 
 //按照邀请查询抽奖、集道具、打赏、充值
-export async function getOption(sequelize: Sequelize,commonoption:string,start:string, length:string, useruuid: string, starttime: string, endtime: string) {
+export async function getOption(sequelize: Sequelize, commonoption: string, start: string, length: string, useruuid: string, starttime: string, endtime: string) {
     let res = await sequelize.query(`
-    select a.amount,a.point from users.amountlog  a where a.mode='${commonoption}' 
+    select a.amount,a.points,b.openid,a.time as created from users.amountlog  a,users.users_ext b,users.users c where a.mode='${commonoption}' 
+    and a.useruuid=b.uuid
+    and c.uuid=b.uuid
     and a.useruuid='${useruuid}'
     and a.time>='${starttime}'
     and a.time<='${endtime}' 
-    order by a.time desc
     offset ${start}
     limit ${length}
     `, { type: 'SELECT' }) as any[]
     return res
 }
 
-//按照邀请获得奖励流水记录
-export async function getInvite(sequelize: Sequelize,commonoption:string,start:string, length:string, useruuid: string, starttime: string, endtime: string) {
+export async function getOptionpage(sequelize: Sequelize, commonoption: string, useruuid: string, starttime: string, endtime: string) {
     let res = await sequelize.query(`
-    select  a.phone,c.openid,d.amount,d.points  from ads.invitation as a  
-    INNER JOIN ads.invitation as b on a.parentinvite=b.invite and b.useruuid='${useruuid}' 
-    INNER JOIN users.users_ext as c on c.uuid=a.useruuid
-    INNER JOIN users.amountlog as d on d.useruuid='${useruuid}' and d.mode='invite'
+    select a.amount,a.points,b.openid,c.created from users.amountlog  a,users.users_ext b,users.users c where a.mode='${commonoption}' 
+    and a.useruuid=b.uuid
+    and c.uuid=b.uuid
+    and a.useruuid='${useruuid}'
     and a.time>='${starttime}'
     and a.time<='${endtime}' 
-    order by a.time desc
+    `, { type: 'SELECT' }) as any[]
+    return res.length
+}
+
+//按照邀请获得奖励流水记录
+export async function getInvite(sequelize: Sequelize,  start: string, length: string, useruuid: string, starttime: string, endtime: string) {
+    let res = await sequelize.query(`
+    select DISTINCT a.phone as content,c.openid,d.time as created,d.amount,d.points
+    from ads.invitation as a  
+        INNER JOIN ads.invitation as b on a.parentinvite=b.invite and  b.useruuid='${useruuid}'  
+             left JOIN users.users_ext as c on c.uuid=a.useruuid
+              left JOIN users.users as e on e.uuid=a.useruuid 
+              left JOIN users.amountlog as d on d.useruuid=b.useruuid and d.mode='invite'
+    and d.time>='${starttime}'
+    and d.time<='${endtime}' 
+    offset ${start}
+    limit ${length}
+    `, { type: 'SELECT' }) as any[]
+    return res
+}
+//按照邀请获得奖励流水记录
+export async function getInvitepage(sequelize: Sequelize, start: string, length: string, useruuid: string, starttime: string, endtime: string) {
+    let res = await sequelize.query(`
+    select DISTINCT a.phone as content,c.openid,d.time as created,d.amount,d.points
+    from ads.invitation as a  
+        INNER JOIN ads.invitation as b on a.parentinvite=b.invite and  b.useruuid='${useruuid}'  
+             left JOIN users.users_ext as c on c.uuid=a.useruuid
+              left JOIN users.users as e on e.uuid=a.useruuid 
+              left JOIN users.amountlog as d on d.useruuid=b.useruuid 
+              and d.mode='invite'
+    and d.time>='${starttime}'
+    and d.time<='${endtime}' 
+    offset ${start}
+    limit ${length}
+    `, { type: 'SELECT' }) as any[]
+    return res.length
+}
+
+
+//按照所有奖励流水记录
+export async function getall(sequelize: Sequelize, commonoption: string, start: string, length: string, useruuid: string, starttime: string, endtime: string) {
+    let res = await sequelize.query(`
+    select DISTINCT c.title as content,a.amount,a.points,d.openid,e.created from users.amountlog as a 
+    INNER JOIN ads.adslog as b on
+    a.useruuid=b.useruuid  and a.useruuid='${useruuid}' and (a.amount>0 or a.points>0)
+    INNER JOIN users.users_ext as d on d.uuid=a.useruuid
+    INNER JOIN users.users as e on e.uuid=d.uuid
+    INNER JOIN ads.ads as c on c.uuid=b.aduuid
+    and a.time>='${starttime}'
+    and a.time<='${endtime}' 
     offset ${start}
     limit ${length}
     `, { type: 'SELECT' }) as any[]
     return res
 }
 //按照答题获得奖励流水记录
-export async function getAnswer(sequelize: Sequelize,commonoption:string,start:string, length:string, useruuid: string, starttime: string, endtime: string) {
+export async function getAnswer(sequelize: Sequelize, commonoption: string, start: string, length: string, useruuid: string, starttime: string, endtime: string) {
     let res = await sequelize.query(`
-    select c.title,a.amount,a.points from users.amountlog as a 
+    select DISTINCT c.title as content,a.amount,a.points,d.openid,a.time as created from users.amountlog as a 
     INNER JOIN ads.adslog as b on
-    a.useruuid=b.useruuid and a.mode='answer' and a.useruuid='${useruuid}'
+    a.useruuid=b.useruuid and a.mode='answer' and a.useruuid='${useruuid}' and (a.amount>0 or a.points>0)
+    INNER JOIN users.users_ext as d on d.uuid=a.useruuid
+    INNER JOIN users.users as e on e.uuid=d.uuid
     INNER JOIN ads.ads as c on c.uuid=b.aduuid
     and a.time>='${starttime}'
     and a.time<='${endtime}' 
-    order by a.time desc
     offset ${start}
     limit ${length}
     `, { type: 'SELECT' }) as any[]
     return res
 }
-//按照提现流水记录
-export async function getWithdraw(sequelize: Sequelize,start:string, length:string, useruuid: string, starttime: string, endtime: string) {
+//按照答题获得奖励流水记录
+export async function getAnswerpage(sequelize: Sequelize, commonoption: string, useruuid: string, starttime: string, endtime: string) {
     let res = await sequelize.query(`
-    select a.amount from users.amountlog a where a.mode='withdraw' and a.useruuid='${useruuid}'
+    select DISTINCT c.title as content,a.amount,a.points,d.openid,a.time as created from users.amountlog as a 
+    INNER JOIN ads.adslog as b on
+    a.useruuid=b.useruuid and a.mode='answer' and a.useruuid='${useruuid}' and (a.amount>0 or a.points>0)
+    INNER JOIN users.users_ext as d on d.uuid=a.useruuid
+    INNER JOIN users.users as e on e.uuid=d.uuid
+    INNER JOIN ads.ads as c on c.uuid=b.aduuid
     and a.time>='${starttime}'
     and a.time<='${endtime}' 
-    order by a.time desc
+    `, { type: 'SELECT' }) as any[]
+    return res.length
+}
+
+//按照提现流水记录
+export async function getWithdraw(sequelize: Sequelize, start: string, length: string, useruuid: string, starttime: string, endtime: string) {
+    let res = await sequelize.query(`
+    select a.amount,a.points,c.openid,a.time as created from users.amountlog a 
+    INNER JOIN users.users as b on 
+    b.uuid=a.useruuid
+    INNER JOIN users.users_ext as c on 
+    c.uuid=b.uuid
+	where a.mode='withdraw' and a.useruuid='${useruuid}'
+    and a.time>='${starttime}'
+    and a.time<='${endtime}' 
     offset ${start}
     limit ${length}
     `, { type: 'SELECT' }) as any[]
     return res
 }
-//按指定时间查询零钱流水 write by wyho
-export async function getBalanceorpoints(sequelize: Sequelize,option:string,useruuid: string, timestamps: string) {
+//按照购买流水记录
+export async function getWithdrawpage(sequelize: Sequelize, start: string, length: string, useruuid: string, starttime: string, endtime: string) {
     let res = await sequelize.query(`
-        select a.points,a.amount from users.amountlog a
+    select a.amount,a.points,c.openid,a.time as created from users.amountlog a 
+    INNER JOIN users.users as b on 
+    b.uuid=a.useruuid
+    INNER JOIN users.users_ext as c on 
+    c.uuid=b.uuid
+	where a.mode='withdraw' and a.useruuid='${useruuid}'
+    and a.time>='${starttime}'
+    and a.time<='${endtime}' 
+    offset ${start}
+    limit ${length}
+    `, { type: 'SELECT' }) as any[]
+    return res.length
+}
+
+//按照购买流水记录
+export async function getorderspage(sequelize: Sequelize, useruuid: string, starttime: string, endtime: string) {
+    let res = await sequelize.query(`
+    select a.amount,a.points,c.openid,b.created from users.amountlog a 
+    INNER JOIN users.users as b on 
+    b.uuid=a.useruuid
+    INNER JOIN users.users_ext as c on 
+    c.uuid=b.uuid
+	where a.mode='withdraw' and a.useruuid='${useruuid}'
+    and a.time>='${starttime}'
+    and a.time<='${endtime}' 
+    `, { type: 'SELECT' }) as any[]
+    return res.length
+}
+
+//按指定时间查询零钱流水 write by wyho
+export async function getBalanceorpoints(sequelize: Sequelize, option: string, useruuid: string, timestamps: string) {
+    let res = await sequelize.query(`
+        select a.points,a.amount,a.time as created,c.openid from users.amountlog a
         where a.useruuid='${useruuid}'
+        INNER JOIN users.users as b on 
+        b.uuid=a.useruuid
+        INNER JOIN users.users_ext as c on 
+        c.uuid=b.uuid
         and a.mode='${option}'
+        and a.time ='${timestamps}'
+        and a.amount is not null
+        and a.amount >0
+    `, { type: 'SELECT' }) as any[]
+    return res
+}
+export async function getallBalanceorpoints(sequelize: Sequelize, useruuid: string, timestamps: string) {
+    let res = await sequelize.query(`
+        select a.points,a.amount,a.time as created,c.openid from users.amountlog a
+        where a.useruuid='${useruuid}'
+        INNER JOIN users.users as b on 
+        b.uuid=a.useruuid
+        INNER JOIN users.users_ext as c on 
+        c.uuid=b.uuid
         and a.amount is not null
         and a.amount >0
     `, { type: 'SELECT' }) as any[]

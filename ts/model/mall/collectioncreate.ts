@@ -38,7 +38,10 @@ export const defineFunction = function (sequelize: Sequelize) {
         isNoFortune:DataTypes.INTEGER,//是否展示运势
         collectiondone: DataTypes.ARRAY(DataTypes.STRING),//记录帮忙收集过该活动的用户
         rewardNumber:DataTypes.INTEGER,//获奖人数
-        rewardDone:DataTypes.INTEGER//领奖人数
+        rewardDone:DataTypes.INTEGER,//领奖人数
+        sharecontent:DataTypes.CHAR(225),
+        detailtitle:DataTypes.CHAR(225),//详情标题
+        sharetitle:DataTypes.CHAR(225)//分享标题
     }, {
             timestamps: false,
             schema: "mall",

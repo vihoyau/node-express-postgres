@@ -19,7 +19,7 @@ router.post('/collect', checkLogin, async function (req: Request, res: Response,
 
     let { ActivityName, Tag, Starttime, Endtime, Point
         , Gooduuid, rewardmethod, cardIdAmounts, RedPacket, Couponid
-        , goodtitle, Coupontitle, chipIdAmounts, Reward, ActivityRule, isNoFortune ,rewardNumber} = (req as any).body
+        , goodtitle, Coupontitle, chipIdAmounts, Reward, ActivityRule, isNoFortune ,rewardNumber,sharetitle,detailtitle,sharecontent} = (req as any).body
     validateCgi({
         ActivityName: ActivityName, Tag: Tag
         , Starttime: Starttime, Endtime: Endtime
@@ -51,7 +51,10 @@ router.post('/collect', checkLogin, async function (req: Request, res: Response,
             Reward: Reward,//奖励方式
             ActivityRule: ActivityRule,//活动
             isNoFortune: isNoFortune,//是否展示运势
-            rewardNumber:rewardNumber//领奖人数
+            rewardNumber:rewardNumber,//领奖人数
+            detailtitle:detailtitle,//详情标题
+            sharetitle:sharetitle,//分享标题
+            sharecontent:sharecontent//分享内容
         }
         if (!Gooduuid) {
             delete tmp.Gooduuid
@@ -80,7 +83,7 @@ router.post('/collect', checkLogin, async function (req: Request, res: Response,
 //收集道具活动修改功能
 router.post('/modify/informationbase', checkLogin, async function (req: Request, res: Response, next: NextFunction) {
     let { uuid, Tag, Starttime, Endtime
-        , Point, Gooduuid, RedPacket, Couponid,  Coupontitle, goodtitle, rewardmethod, Reward, ActivityRule, isNoFortune,rewardNumber } = (req as any).body
+        , Point, Gooduuid, RedPacket, Couponid,  Coupontitle, goodtitle, rewardmethod, Reward, ActivityRule, isNoFortune,rewardNumber,sharetitle,detailtitle,sharecontent} = (req as any).body
     // validateCgi({
     //     ActivityName: ActivityName, Tag: Tag
     //     , Starttime: Starttime, Endtime: Endtime
@@ -109,7 +112,10 @@ router.post('/modify/informationbase', checkLogin, async function (req: Request,
             ads.rewardmethod = rewardmethod,
             ads.ActivityRule = ActivityRule,
             ads.isNoFortune=isNoFortune,
-            ads.rewardNumber=rewardNumber
+            ads.rewardNumber=rewardNumber,
+            ads.sharetitle=sharetitle,
+            ads.detailtitle=detailtitle,
+            ads.sharecontent=sharecontent
         if (!Gooduuid) {
             delete ads.Gooduuid
         }

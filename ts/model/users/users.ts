@@ -142,6 +142,28 @@ export async function getAllUserPoints(sequelize: Sequelize, searchdata: string,
 /**
  * 查询会员的所有信息
  */
+export async function getAllUsersinfo(sequelize: Sequelize, searchdata: string, cursor: number, limit: number, pointsort: string, balancesort: string,option:string) {
+    if (pointsort != "" || pointsort) {
+        pointsort = ' ue.points ' + pointsort + ','
+    } else {
+        pointsort = ''
+    }
+    if (balancesort != "" || balancesort) {
+        balancesort = ' ue.balance ' + balancesort + ','
+    } else {
+        balancesort = ''
+    }
+    let res = await sequelize.query(`select ss.*,u.created,u.username 
+    from (select sum(a.points) as optionpoints,sum(a.amount) optionamountlog,e.uuid,e.openid 
+    from users.amountlog a inner join users.users_ext e on  e.uuid=a.useruuid and a.mode = '${option}'
+    GROUP BY e.uuid) as ss inner join users.users u  on ss.uuid=u.uuid
+    and u.username like '%${searchdata}%' 
+    offset ${cursor} LIMIT ${limit}`, { type: "select" }) as any[]
+    return res
+}
+/**
+ * 查询会员的所有信息
+ */
 export async function getAllUsers(sequelize: Sequelize, searchdata: string, cursor: number, limit: number, pointsort: string, balancesort: string) {
     if (pointsort != "" || pointsort) {
         pointsort = ' ue.points ' + pointsort + ','
@@ -153,12 +175,30 @@ export async function getAllUsers(sequelize: Sequelize, searchdata: string, curs
     } else {
         balancesort = ''
     }
-    let res = await sequelize.query(`select * from users.users u,users.users_ext ue
+    let res = await sequelize.query(`select u.created,u.username,ue.balance as optionamountlog,
+    ue.points as optionpoints,u.uuid,ue.openid from users.users u,users.users_ext ue
     where u.uuid=ue.uuid
     and (u.username like '%${searchdata}%' or ue.openid like '%${searchdata}%' )
     order by ${pointsort} ${balancesort} u.created desc offset ${cursor} LIMIT ${limit}`, { type: "select" }) as any[]
     return res
 }
+// export async function getAllUsers(sequelize: Sequelize, searchdata: string, cursor: number, limit: number, pointsort: string, balancesort: string) {
+//     if (pointsort != "" || pointsort) {
+//         pointsort = ' ue.points ' + pointsort + ','
+//     } else {
+//         pointsort = ''
+//     }
+//     if (balancesort != "" || balancesort) {
+//         balancesort = ' ue.balance ' + balancesort + ','
+//     } else {
+//         balancesort = ''
+//     }
+//     let res = await sequelize.query(`select * from users.users u,users.users_ext ue
+//     where u.uuid=ue.uuid
+//     and (u.username like '%${searchdata}%' or ue.openid like '%${searchdata}%' )
+//     order by ${pointsort} ${balancesort} u.created desc offset ${cursor} LIMIT ${limit}`, { type: "select" }) as any[]
+//     return res
+// }
 
 export async function getCount(sequelize: Sequelize, searchdata: string) {
     let res = await sequelize.query(`select count(*) from users.users u,users.users_ext ue

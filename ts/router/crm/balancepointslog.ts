@@ -5,7 +5,8 @@ import { balancePointLog } from "./validator"
 import { sendOK, sendErrMsg } from "../../lib/response"
 import { Router, Request, Response, NextFunction } from "express"
 import { findPointByUserUUID, findBalanceByUserUUID,
-     getPointCountByUser, getBalanceCountByUser,getOption,getInvite ,getAnswer,getWithdraw} from "../../model/users/amountlog"
+     getPointCountByUser, getBalanceCountByUser,getOption,getInvite ,
+     getAnswer,getWithdraw,getOptionpage,getAnswerpage,getInvitepage} from "../../model/users/amountlog"
 export const router: Router = Router()
 
 //获取用户的零钱积分流水
@@ -40,48 +41,56 @@ router.get('/', checkLogin, async function (req: Request, res: Response, next: N
     }
 })
 //重构获取用户的零钱积分流水
-router.post('/stream', checkLogin, async function (req: Request, res: Response, next: NextFunction) {
-    let { useruuid, start, length, starttime, endtime,whatoption} = (req as any).body
+router.get('/stream', checkLogin, async function (req: Request, res: Response, next: NextFunction) {
+    let { useruuid, start, length, starttime, endtime,whatoption} = req.query
     validateCgi({ useruuid, start, length }, balancePointLog.get)
     //whatoption有邀请，答题，抽奖，集道具
     //option返回一个对应的选项结果
     //invite邀请';lottery抽奖'; collection集道具'; reward打赏'; recharge充值'; withdraw提现'; 
     let commonoption
-    let recordsFiltered
+    let log
     let content:string
+    let recordsFiltered
     switch (whatoption) {
         case 'answer':
-        recordsFiltered=await getAnswer(req.app.locals.sequelize,commonoption,start,length,useruuid, starttime, endtime)
+        log=await getAnswer(req.app.locals.sequelize,commonoption,start,length,useruuid, starttime, endtime)
         content="答题";
+        recordsFiltered=await getAnswerpage(req.app.locals.sequelize,commonoption,useruuid, starttime, endtime) ;
         break;
         case 'invite':  
-        recordsFiltered=await getInvite(req.app.locals.sequelize,commonoption,start,length,useruuid, starttime, endtime) ;
+        log=await getInvite(req.app.locals.sequelize,start,length,useruuid, starttime, endtime) ;
+        recordsFiltered=await getInvitepage(req.app.locals.sequelize,start,length,useruuid, starttime, endtime) ;
         break;
         case 'lottery': 
         commonoption="lottery"
-        recordsFiltered=await getOption(req.app.locals.sequelize,commonoption,start,length,useruuid, starttime, endtime) ;
+        log=await getOption(req.app.locals.sequelize,commonoption,start,length,useruuid, starttime, endtime) ;
         content="抽奖";
+        recordsFiltered=await getOptionpage(req.app.locals.sequelize,commonoption,useruuid, starttime, endtime) ;
         break;
         case 'collection': 
         commonoption="collection"
-        recordsFiltered=await getOption(req.app.locals.sequelize,commonoption,start,length,useruuid, starttime, endtime) ; 
+        log=await getOption(req.app.locals.sequelize,commonoption,start,length,useruuid, starttime, endtime) ; 
         content="集道具";
+        recordsFiltered=await getOptionpage(req.app.locals.sequelize,commonoption,useruuid, starttime, endtime) ;
         break;
         case 'reward': 
         commonoption="reward"
-        recordsFiltered=await getOption(req.app.locals.sequelize,commonoption,start,length,useruuid, starttime, endtime) ; 
+        log=await getOption(req.app.locals.sequelize,commonoption,start,length,useruuid, starttime, endtime) ; 
         content="打赏"
+        recordsFiltered=await getOptionpage(req.app.locals.sequelize,commonoption,useruuid, starttime, endtime) ;
         break;
         case 'recharge': 
         commonoption="recharge"
-        recordsFiltered=await getOption(req.app.locals.sequelize,commonoption,start,length,useruuid, starttime, endtime) ; 
+        log=await getOption(req.app.locals.sequelize,commonoption,start,length,useruuid, starttime, endtime) ; 
         content="充值"
+        recordsFiltered=await getOptionpage(req.app.locals.sequelize,commonoption,useruuid, starttime, endtime) ;
         break;
         case 'withdraw': 
-        recordsFiltered=await getWithdraw(req.app.locals.sequelize,start,length,useruuid, starttime, endtime) ; 
+        log=await getWithdraw(req.app.locals.sequelize,start,length,useruuid, starttime, endtime) ; 
         content="提现"
+        recordsFiltered=await getOptionpage(req.app.locals.sequelize,commonoption,useruuid, starttime, endtime) ;
         break;
         default: break;
     }
-    return sendOK(res, { recordsFiltered,content})
+    return sendOK(res, { log,recordsFiltered,content})
 })
