@@ -6,7 +6,7 @@ import { sendOK, sendErrMsg } from "../../lib/response"
 import { Router, Request, Response, NextFunction } from "express"
 import { findPointByUserUUID, findBalanceByUserUUID,
      getPointCountByUser, getBalanceCountByUser,getOption,getInvite ,
-     getAnswer,getWithdraw,getOptionpage,getAnswerpage,getInvitepage} from "../../model/users/amountlog"
+     getAnswer,getWithdraw,getOptionpage,getAnswerpage,getInvitepage,getlottery,getlotterypage} from "../../model/users/amountlog"
 export const router: Router = Router()
 
 //获取用户的零钱积分流水
@@ -69,9 +69,13 @@ router.get('/stream', checkLogin, async function (req: Request, res: Response, n
         break;
         case 'lottery': 
         commonoption="lottery"
-        log=await getOption(req.app.locals.sequelize,commonoption,start,length,useruuid, starttime, endtime) ;
+        log=await getlottery(req.app.locals.sequelize,start,length,useruuid, starttime, endtime) ;
         content="抽奖";
-        recordsFiltered=await getOptionpage(req.app.locals.sequelize,commonoption,useruuid, starttime, endtime) ;
+        log.forEach(r => {
+            r.content = (r.content).title
+            r.amount = r.amount / 100
+        })
+        recordsFiltered=await getlotterypage(req.app.locals.sequelize,useruuid, starttime, endtime) ;
         break;
         case 'collection': 
         commonoption="collection"

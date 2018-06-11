@@ -173,8 +173,6 @@ export async function getInvitepage(sequelize: Sequelize, start: string, length:
     left JOIN users.users as e on e.uuid=a.useruuid 
     and e.created>='${starttime}'
     and e.created<='${endtime}' 
-    offset ${start}
-    limit ${length}
     `, { type: 'SELECT' }) as any[]
     return res.length
 }
@@ -301,4 +299,31 @@ export async function getallBalanceorpoints(sequelize: Sequelize, useruuid: stri
         and a.amount >0
     `, { type: 'SELECT' }) as any[]
     return res
+}
+
+
+//按照抽奖获得奖励流水记录
+export async function getlottery(sequelize: Sequelize,  start: string, length: string, useruuid: string, starttime: string, endtime: string) {
+    let res = await sequelize.query(`
+    select DISTINCT b.prizeinfo as content,b.balance as amount,b.point  as points,d.openid,b.created as created from users.lotterylog as b 
+    INNER JOIN users.users_ext as d on d.uuid=b.useruuid
+    where b.useruuid='${useruuid}' and (b.balance>0 or b.point>0)
+    and b.created>='${starttime}'
+    and b.created<='${endtime}' 
+    offset ${start}
+    limit ${length}
+    `, { type: 'SELECT' }) as any[]
+    return res
+}
+
+//按照抽奖获得奖励流水记录
+export async function getlotterypage(sequelize: Sequelize,  useruuid: string, starttime: string, endtime: string) {
+    let res = await sequelize.query(`
+    select DISTINCT b.prizeinfo as content,b.balance as amount,b.point as points,d.openid,b.created as created from users.lotterylog as b 
+    INNER JOIN users.users_ext as d on d.uuid=b.useruuid
+    where b.useruuid='${useruuid}' and (b.balance>0 or b.point>0)
+    and b.created>='${starttime}'
+    and b.created<='${endtime}' 
+    `, { type: 'SELECT' }) as any[]
+    return res.length
 }
