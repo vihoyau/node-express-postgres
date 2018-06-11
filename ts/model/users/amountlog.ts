@@ -151,14 +151,13 @@ export async function getOptionpage(sequelize: Sequelize, commonoption: string, 
 //按照邀请获得奖励流水记录
 export async function getInvite(sequelize: Sequelize,  start: string, length: string, useruuid: string, starttime: string, endtime: string) {
     let res = await sequelize.query(`
-    select DISTINCT a.phone as content,c.openid,d.time as created,d.amount,d.points
+    select DISTINCT a.phone as content,c.openid,e.created ,c.balance as amount,c.points
     from ads.invitation as a  
-        INNER JOIN ads.invitation as b on a.parentinvite=b.invite and  b.useruuid='${useruuid}'  
-             left JOIN users.users_ext as c on c.uuid=a.useruuid
-              left JOIN users.users as e on e.uuid=a.useruuid 
-              left JOIN users.amountlog as d on d.useruuid=b.useruuid and d.mode='invite'
-    and d.time>='${starttime}'
-    and d.time<='${endtime}' 
+    INNER JOIN ads.invitation as b on a.parentinvite=b.invite and  b.useruuid='${useruuid}'  
+    left JOIN users.users_ext as c on c.uuid=a.useruuid 
+    left JOIN users.users as e on e.uuid=a.useruuid 
+    and e.created>='${starttime}'
+    and e.created<='${endtime}' 
     offset ${start}
     limit ${length}
     `, { type: 'SELECT' }) as any[]
@@ -167,15 +166,13 @@ export async function getInvite(sequelize: Sequelize,  start: string, length: st
 //按照邀请获得奖励流水记录
 export async function getInvitepage(sequelize: Sequelize, start: string, length: string, useruuid: string, starttime: string, endtime: string) {
     let res = await sequelize.query(`
-    select DISTINCT a.phone as content,c.openid,d.time as created,d.amount,d.points
+    select DISTINCT a.phone 
     from ads.invitation as a  
-        INNER JOIN ads.invitation as b on a.parentinvite=b.invite and  b.useruuid='${useruuid}'  
-             left JOIN users.users_ext as c on c.uuid=a.useruuid
-              left JOIN users.users as e on e.uuid=a.useruuid 
-              left JOIN users.amountlog as d on d.useruuid=b.useruuid 
-              and d.mode='invite'
-    and d.time>='${starttime}'
-    and d.time<='${endtime}' 
+    INNER JOIN ads.invitation as b on a.parentinvite=b.invite and  b.useruuid='${useruuid}'  
+    left JOIN users.users_ext as c on c.uuid=a.useruuid 
+    left JOIN users.users as e on e.uuid=a.useruuid 
+    and e.created>='${starttime}'
+    and e.created<='${endtime}' 
     offset ${start}
     limit ${length}
     `, { type: 'SELECT' }) as any[]
@@ -202,14 +199,13 @@ export async function getall(sequelize: Sequelize, commonoption: string, start: 
 //按照答题获得奖励流水记录
 export async function getAnswer(sequelize: Sequelize, commonoption: string, start: string, length: string, useruuid: string, starttime: string, endtime: string) {
     let res = await sequelize.query(`
-    select DISTINCT c.title as content,a.amount,a.points,d.openid,a.time as created from users.amountlog as a 
-    INNER JOIN ads.adslog as b on
-    a.useruuid=b.useruuid and a.mode='answer' and a.useruuid='${useruuid}' and (a.amount>0 or a.points>0)
-    INNER JOIN users.users_ext as d on d.uuid=a.useruuid
+    select DISTINCT c.title as content,b.balance as amount,b.points,d.openid,e.created as created from ads.adslog as b 
+    INNER JOIN users.users_ext as d on d.uuid=b.useruuid
     INNER JOIN users.users as e on e.uuid=d.uuid
     INNER JOIN ads.ads as c on c.uuid=b.aduuid
-    and a.time>='${starttime}'
-    and a.time<='${endtime}' 
+    where b.useruuid='${useruuid}' and (b.balance>0 or b.points>0)
+    and e.created>='${starttime}'
+    and e.created<='${endtime}' 
     offset ${start}
     limit ${length}
     `, { type: 'SELECT' }) as any[]
@@ -218,14 +214,13 @@ export async function getAnswer(sequelize: Sequelize, commonoption: string, star
 //按照答题获得奖励流水记录
 export async function getAnswerpage(sequelize: Sequelize, commonoption: string, useruuid: string, starttime: string, endtime: string) {
     let res = await sequelize.query(`
-    select DISTINCT c.title as content,a.amount,a.points,d.openid,a.time as created from users.amountlog as a 
-    INNER JOIN ads.adslog as b on
-    a.useruuid=b.useruuid and a.mode='answer' and a.useruuid='${useruuid}' and (a.amount>0 or a.points>0)
-    INNER JOIN users.users_ext as d on d.uuid=a.useruuid
+    select DISTINCT c.title as content,b.balance as amount,b.points,d.openid,e.created as created from ads.adslog as b 
+    INNER JOIN users.users_ext as d on d.uuid=b.useruuid
     INNER JOIN users.users as e on e.uuid=d.uuid
     INNER JOIN ads.ads as c on c.uuid=b.aduuid
-    and a.time>='${starttime}'
-    and a.time<='${endtime}' 
+    where b.useruuid='${useruuid}' and (b.balance>0 or b.points>0)
+    and e.created>='${starttime}'
+    and e.created<='${endtime}' 
     `, { type: 'SELECT' }) as any[]
     return res.length
 }
