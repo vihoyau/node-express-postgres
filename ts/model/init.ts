@@ -95,4 +95,3 @@ export async function init(seqz: Sequelize) {
         process.exit(1)
     }
 }
-

@@ -151,13 +151,14 @@ export async function getOptionpage(sequelize: Sequelize, commonoption: string, 
 //按照邀请获得奖励流水记录
 export async function getInvite(sequelize: Sequelize,  start: string, length: string, useruuid: string, starttime: string, endtime: string) {
     let res = await sequelize.query(`
-    select DISTINCT a.phone as content,c.openid,e.created ,c.balance as amount,c.points
-    from ads.invitation as a  
-    INNER JOIN ads.invitation as b on a.parentinvite=b.invite and  b.useruuid='${useruuid}'  
-    left JOIN users.users_ext as c on c.uuid=a.useruuid 
-    left JOIN users.users as e on e.uuid=a.useruuid 
-    and e.created>='${starttime}'
-    and e.created<='${endtime}' 
+    select DISTINCT b.phone as content,d.openid,c.amount,c.points,c.time as created
+    from users.amountlog as c 
+    INNER JOIN ads.invitation as a on c.useruuid = a.useruuid 
+	left JOIN ads.invitation as b on a.invite=b.parentinvite 
+	left JOIN users.users_ext as d on d.uuid=b.useruuid and c.useruuid=d.uuid 
+	where  c.useruuid='${useruuid}'  and mode='invite'
+    and c.time>='${starttime}'
+    and c.time<='${endtime}' 
     offset ${start}
     limit ${length}
     `, { type: 'SELECT' }) as any[]
@@ -166,13 +167,14 @@ export async function getInvite(sequelize: Sequelize,  start: string, length: st
 //按照邀请获得奖励流水记录
 export async function getInvitepage(sequelize: Sequelize, start: string, length: string, useruuid: string, starttime: string, endtime: string) {
     let res = await sequelize.query(`
-    select DISTINCT a.phone 
-    from ads.invitation as a  
-    INNER JOIN ads.invitation as b on a.parentinvite=b.invite and  b.useruuid='${useruuid}'  
-    left JOIN users.users_ext as c on c.uuid=a.useruuid 
-    left JOIN users.users as e on e.uuid=a.useruuid 
-    and e.created>='${starttime}'
-    and e.created<='${endtime}' 
+    select DISTINCT b.phone as content,d.openid,c.amount,c.points
+    from users.amountlog as c 
+    INNER JOIN ads.invitation as a on c.useruuid = a.useruuid 
+	left JOIN ads.invitation as b on a.invite=b.parentinvite 
+	left JOIN users.users_ext as d on d.uuid=b.useruuid and c.useruuid=d.uuid 
+	where  c.useruuid='${useruuid}'  and mode='invite'
+    and c.time>='${starttime}'
+    and c.time<='${endtime}' 
     `, { type: 'SELECT' }) as any[]
     return res.length
 }
@@ -197,13 +199,10 @@ export async function getall(sequelize: Sequelize, commonoption: string, start: 
 //按照答题获得奖励流水记录
 export async function getAnswer(sequelize: Sequelize, commonoption: string, start: string, length: string, useruuid: string, starttime: string, endtime: string) {
     let res = await sequelize.query(`
-    select DISTINCT c.title as content,b.balance as amount,b.points,d.openid,e.created as created from ads.adslog as b 
+    select DISTINCT b.amount,b.points,d.openid,b.time as created  from users.amountlog as b 
     INNER JOIN users.users_ext as d on d.uuid=b.useruuid
-    INNER JOIN users.users as e on e.uuid=d.uuid
-    INNER JOIN ads.ads as c on c.uuid=b.aduuid
-    where b.useruuid='${useruuid}' and (b.balance>0 or b.points>0)
-    and e.created>='${starttime}'
-    and e.created<='${endtime}' 
+	left JOIN users.users as e on e.uuid=d.uuid
+    where b.useruuid='${useruuid}' and (b.amount>0 or b.points>0)
     offset ${start}
     limit ${length}
     `, { type: 'SELECT' }) as any[]
@@ -212,11 +211,10 @@ export async function getAnswer(sequelize: Sequelize, commonoption: string, star
 //按照答题获得奖励流水记录
 export async function getAnswerpage(sequelize: Sequelize, commonoption: string, useruuid: string, starttime: string, endtime: string) {
     let res = await sequelize.query(`
-    select DISTINCT c.title as content,b.balance as amount,b.points,d.openid,e.created as created from ads.adslog as b 
+    select DISTINCT b.amount,b.points,d.openid,b.time as created  from users.amountlog as b 
     INNER JOIN users.users_ext as d on d.uuid=b.useruuid
-    INNER JOIN users.users as e on e.uuid=d.uuid
-    INNER JOIN ads.ads as c on c.uuid=b.aduuid
-    where b.useruuid='${useruuid}' and (b.balance>0 or b.points>0)
+	left JOIN users.users as e on e.uuid=d.uuid
+    where b.useruuid='${useruuid}' and (b.amount>0 or b.points>0)
     and e.created>='${starttime}'
     and e.created<='${endtime}' 
     `, { type: 'SELECT' }) as any[]

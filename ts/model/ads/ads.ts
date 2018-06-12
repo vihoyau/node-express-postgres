@@ -147,7 +147,12 @@ export async function getByCategory(seque: Sequelize, category: string, addressC
         }
     }
     ctrl = ctrl + ")"
-    if (category) {
+    if(category=='c04c54e3-1bac-47fa-a241-959cd53f7691'){
+        let res = await seque.query(`select * from ads.ads a, ads.ads_ext b where a.uuid=b.uuid and category='${category}'
+        and state = 'on' and deleted=0 and status=1 and a.uuid in ${ctrl}
+        and a.advertiseruuid in ${advuuid} order by a.nice desc offset ${cursor} limit ${limit}`, { type: "SELECT" }) as any[]
+        return res 
+    }else if (category) {
         let res = await seque.query(`select * from ads.ads a, ads.ads_ext b where a.uuid=b.uuid and category='${category}'
         and state = 'on' and deleted=0 and status=1 and a.uuid in ${ctrl}
         and a.advertiseruuid in ${advuuid} order by a.created desc offset ${cursor} limit ${limit}`, { type: "SELECT" }) as any[]

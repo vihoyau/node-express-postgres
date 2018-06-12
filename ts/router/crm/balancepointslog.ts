@@ -54,17 +54,11 @@ router.get('/stream', checkLogin, async function (req: Request, res: Response, n
     switch (whatoption) {
         case 'answer':
         log=await getAnswer(req.app.locals.sequelize,commonoption,start,length,useruuid, starttime, endtime)
-        log.forEach(r => {
-            r.amount = r.amount / 100
-        })
         content="答题";
         recordsFiltered=await getAnswerpage(req.app.locals.sequelize,commonoption,useruuid, starttime, endtime) ;
         break;
         case 'invite':  
         log=await getInvite(req.app.locals.sequelize,start,length,useruuid, starttime, endtime) ;
-        log.forEach(r => {
-            r.amount = r.amount / 100
-        })
         recordsFiltered=await getInvitepage(req.app.locals.sequelize,start,length,useruuid, starttime, endtime) ;
         break;
         case 'lottery': 

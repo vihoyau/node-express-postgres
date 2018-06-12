@@ -17,14 +17,13 @@ import { queryunitone } from "../../model/puton/unit"
 import { getByKeywords, update, hotkeyInsert } from "../../model/ads/hotkey"
 import { getAdsUuids, getByUserAds, favoriateInsert, deleteByUserAds } from "../../model/ads/favoriate"
 import { insertAdsView, getAdsviewByuuid } from "../../model/ads/ads_view"
-import { findByUseruuidAndAdsuuid } from "../../model/ads/applaud"
 import { findByPrimary, addPointAndCashlottery } from "../../model/users/users"
 import { updatePoints, updateAdsViews, modifiedAdsViews, findByPrimary as findUsersExt } from "../../model/users/users_ext"
 import { insertReward } from "../../model/users/reward"
-import { insertApplaud, deleteByAdsUuid } from "../../model/ads/applaud"
+import { insertApplaud, deleteByAdsUuid, findByUseruuidAndAdsuuid } from "../../model/ads/applaud"
 import { insertStatistics } from "../../model/users/statistics"
 //import { getSubcategory, getSubcategory2 } from "../../model/ads/category"
-import {  getSubcategory2 } from "../../model/ads/category"
+import { getSubcategory2 } from "../../model/ads/category"
 import { findByName } from "../../model/system/system"
 import { getByTwoUuid, insertAdslog, updateAdslog } from "../../model/ads/adslog"
 import { updateViews, findByPrimary as findViews, updateNumber } from "../../model/ads/ads_ext"
@@ -63,16 +62,24 @@ router.get("/commentlist", getLogininfo, async function (req: Request, res: Resp
         for (let i = 0; i < subcategorys.length; i++) {
             let ads = await encommentedlist(subcategorys[i].uuid)
             for (let i = 0; i < ads.length; i++) {
-                let answered = false,read = false 
+                let answered = false, read = false
                 if (useruuid) {
                     let adslog = await getByTwoUuid(ads[i].uuid, useruuid)
                     if (adslog) {
-                        read = true 
-                        
+                        read = true
                         if (adslog.state)
                             answered = true
                     }
                 }
+                //获取点赞情况
+                let getadsapluad= await findByUseruuidAndAdsuuid(ads[i].uuid, useruuid)
+                if (getadsapluad) {
+                    ads[i].applaud = 'nice'
+                } else {
+                    ads[i].applaud = null
+                }
+                ads[i].read = read
+                ads[i].answered = answered
                 ads[i].read = read
                 ads[i].answered = answered
                 await checkads(req, res, next, ads[i].uuid)
@@ -247,6 +254,27 @@ router.get('/type', getLogininfo, async function (req: Request, res: Response, n
         let { cursor, limit } = getPageCount(page, count)
         let controltimeadsarr = await encommentedListControl3(req, res, next, subtype) as any[]
         let ads = await getByType(req.app.locals.sequelize, subtype, addressComponent, controltimeadsarr, cursor, limit)
+        for (let i = 0; i < ads.length; i++) {
+            let read = false, answered = false
+            if (useruuid) {
+                let adslog = await getByTwoUuid(ads[i].uuid, useruuid)
+                //获取点赞情况
+                let getadsapluad = await findByUseruuidAndAdsuuid(ads[i].uuid, useruuid)
+                if (adslog) {
+                    read = true
+                    if (adslog.state)
+                        answered = true
+                }
+                if (getadsapluad) {
+                    ads[i].applaud = 'nice'
+                } else {
+                    ads[i].applaud = null
+                }
+
+            }
+            ads[i].read = read
+            ads[i].answered = answered
+        }
         ads = await getshowads2(req, res, next, ads, useruuid)
         return sendOK(res, { ads, page: parseInt(page) + 1 + "", count: count })
     } catch (e) {
@@ -274,16 +302,23 @@ router.get('/category', getLogininfo, async function (req: Request, res: Respons
         let controltimeadsarr = await encommentedListControl2(req, res, next, category) as any[]
         let ads = await getByCategory(req.app.locals.sequelize, category, addressComponent, controltimeadsarr, cursor, limit)
         ads = await getshowads2(req, res, next, ads, useruuid)
-
         for (let i = 0; i < ads.length; i++) {
             let read = false, answered = false
             if (useruuid) {
                 let adslog = await getByTwoUuid(ads[i].uuid, useruuid)
+                //获取点赞情况
+                let getadsapluad = await findByUseruuidAndAdsuuid(ads[i].uuid, useruuid)
                 if (adslog) {
                     read = true
                     if (adslog.state)
                         answered = true
                 }
+                if (getadsapluad) {
+                    ads[i].applaud = 'nice'
+                } else {
+                    ads[i].applaud = null
+                }
+
             }
             ads[i].read = read
             ads[i].answered = answered

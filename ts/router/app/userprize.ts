@@ -346,7 +346,6 @@ async function acceptPrize(req: Request, users: any, code: number, lotterytype: 
                         await insertLotterylog({ useruuid: users.uuid, prizeinfo: prize, point: 0, balance: parseFloat(prize.prize.balance) * 100 })
                         logger.error(`用户${users.uuid}获得${parseFloat(prize.prize.balance) * 100}零钱奖励`)
                         await updateUserprizeState(userprize.uuid)//标记奖品已经被领取
-
                         await amountcheck(req.app.locals.sequelize, loginInfo.getUuid(), "lottery", parseFloat(prize.prize.balance), 0)
                     }
                 }
