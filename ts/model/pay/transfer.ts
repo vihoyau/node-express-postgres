@@ -3,7 +3,6 @@ import { getModel } from "../../lib/global"
 
 const [schema, table] = ["pay", "transfer"]
 const modelName = `${schema}.${table}`
-
 export const defineFunction = function (sequelize: Sequelize) {
     return sequelize.define(modelName, {
         uuid: {
@@ -61,7 +60,6 @@ export async function transterAmount(seqz: Sequelize, useruuid: string, transfer
         let ext = res[0]
         if (ext.get("balance") < 0)
             throw new Error("余额不足！")
-
         return getModel(modelName).create(transfer, { transaction: t })
     })
 }

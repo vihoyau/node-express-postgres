@@ -21,10 +21,9 @@ function sleep(ms: number) {
 
 let pem: { ca: Buffer, key: Buffer, cert: Buffer }
 async function readPemAsync() {
-    if (pem)
-        return pem
-
-    let ca = await readFileAsync(path.join(pemDir, "..", "cert", "/rootca.pem"))
+    //测试证书  by wyho
+    //let ca = await readFileAsync(path.join(pemDir, "..", "cert", "/rootca.pem"))
+    let ca = await readFileAsync(path.join(pemDir, "..", "cert", "/cacert.pem"))
     let key = await readFileAsync(path.join(pemDir, "..", "cert", "/apiclient_key.pem"))
     let cert = await readFileAsync(path.join(pemDir, "..", "cert", "/apiclient_cert.pem"))
     pem = { ca: ca, key: key, cert: cert }
@@ -40,7 +39,6 @@ async function postTransfer(xml: string): Promise<any> {
         cert: pem.cert,
         url: "https://api.mch.weixin.qq.com/mmpaymkttransfers/promotion/transfers",
     }
-
     let body = await postAsync(postOpt)
     let obj = await parseXmlAsync(body)
     if (!obj || !obj.xml)
@@ -162,7 +160,6 @@ async function autoPay(uuid: string, info: TimeInfo, finish: Array<string>) {
             payment_time: res.payment_time,
             partner_trade_no: res.partner_trade_no
         }
-
         let trans = await setTransferState(uuid, ext, "fin") //finishTransfer(uuid, JSON.stringify(ext))
         finish.push(uuid)   // 转账成功
         if (trans) {    //插入提现记录，by qizhibiao

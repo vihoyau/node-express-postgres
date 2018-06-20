@@ -55,8 +55,7 @@ router.post('/:useruuid', checkAppLogin, async function (req: Request, res: Resp
             nonce_str: `${new Date().getTime()}${randomInt(1000, 9999)}`,
             useruuid: useruuid
         }
-
-        await transterAmount(req.app.locals.sequelize, useruuid, transter)
+        let wxpay=await transterAmount(req.app.locals.sequelize, useruuid, transter)
         notify("payment.pay", obj)
         return sendOK(res, { msg: "已经发送请求！" })
     } catch (e) {
