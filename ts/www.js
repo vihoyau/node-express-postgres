@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 var app = require('./app');
 var http = require('http');
-var port = parseInt(process.env.PORT || '3002', 10)
+var port = parseInt(process.env.PORT || '6006', 10)
 app.set('port', port);
 var server = http.createServer(app);
 server.listen(port);

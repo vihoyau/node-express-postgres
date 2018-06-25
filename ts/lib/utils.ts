@@ -29,7 +29,7 @@ export function formatDate(d: Date) {
 export function randomInt(from: number, to: number) {
     return Math.floor(Math.random() * (to - from) + from)
 }
-
+//md5加密
 export function md5sum(str: string): string {
     return createHash('md5').update(str).digest("hex")
 }

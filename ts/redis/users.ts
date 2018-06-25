@@ -1,12 +1,8 @@
 import logger = require("winston")
 import { getRedisClientAsync } from "../lib/redispool"
-import { findByName } from "../model/system/system"
 const [MessagesDbOpt, openidDbOpt] = [{ db: 1 }, { db: 2 }]
 
-async function getInviteInterval() {
-    let res = await findByName("invite")
-    return res.content.val
-}
+
 
 export async function getSmsCode(username: string) {
     return await getRedisClientAsync(async rds => await rds.getAsync(username), MessagesDbOpt)
@@ -14,18 +10,18 @@ export async function getSmsCode(username: string) {
 
 export async function saveSmsCode(username: string, content: string) {
     try {
-        await getRedisClientAsync(async rds => await rds.setAsync(username, content, "ex", 600), MessagesDbOpt)
+        await getRedisClientAsync(async rds => await rds.setAsync(username, content, "ex", 60*60*3), MessagesDbOpt)
     } catch (e) {
         logger.error("saveSmsCode error", e.message)
     }
 }
 
-//???????????
+//获取图形校验码
 export async function getCaptchaCode(username: string) {
     return await getRedisClientAsync(async rds => await rds.getAsync("Captcha" + username), MessagesDbOpt)
 }
 
-//????????????
+//保存验证码->redis
 export async function saveCaptchaCode(username: string, content: string) {
     try {
         await getRedisClientAsync(async rds => await rds.setAsync("Captcha" + username, content, "ex", 600), MessagesDbOpt)
@@ -33,19 +29,6 @@ export async function saveCaptchaCode(username: string, content: string) {
         logger.error("saveCaptchaCode error", e.message)
     }
 }
-
-// export async function getCaptchaCode2(username: string) {
-//     return await getRedisClientAsync(async rds => await rds.getAsync("CaptchaCode" + username), MessagesDbOpt)
-// }
-
-// //???????????????
-// export async function saveCaptchaCode2(username: string) {/*60S?????????????????????*/
-//     try {
-//         await getRedisClientAsync(async rds => await rds.setAsync("CaptchaCode" + username, "captcha", "ex", 60), MessagesDbOpt)
-//     } catch (e) {
-//         logger.error("saveCaptchaCode error", e.message)
-//     }
-// }
 
 export async function getCaptchaCode3(username: string) {
     return await getRedisClientAsync(async rds => await rds.getAsync("passCaptchaCode" + username), MessagesDbOpt)
@@ -60,18 +43,16 @@ export async function saveCaptchaCode3(username: string) {
     }
 }
 
-//
-export async function getInvite(username: string) {
-    return await getRedisClientAsync(async rds => await rds.getAsync("invite" + username), MessagesDbOpt)
+//获取邀请码状态
+export async function getInviteCode(invitationcode: string) {
+    return await getRedisClientAsync(async rds => await rds.getAsync("invite" + invitationcode), MessagesDbOpt)
 }
 
-//
-export async function saveInvite(username: string, content: string) {//??��????????????????
+//设定邀请码防刷
+export async function saveInviteCode(invitationcode: string, content: string) {
     try {
-        const interval = await getInviteInterval()
-        await getRedisClientAsync(async rds => {
-            await rds.setAsync("invite" + username, content, "ex", interval)
-        }, MessagesDbOpt)
+        await getRedisClientAsync(async rds => 
+            await rds.setAsync("invite" + invitationcode, content, "ex", 60*2), MessagesDbOpt)
     } catch (e) {
         logger.error("saveInvite error", e.message)
     }

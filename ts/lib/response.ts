@@ -13,19 +13,18 @@ export function sendError(res: Response, e: Error): void {
 export function sendErrMsg(res: Response, msg: string, code: number): void {
     sendError(res, new ReqError(msg, code))
 }
-
+//权限问题返回提示
 export function sendNoPerm(res: Response, msg?: string): void {
     sendError(res, new ReqError(msg ? msg : "没有权限！", 403))
 }
-
+//路径不存在返回提示
 export function sendNotFound(res: Response, msg?: string): void {
     sendError(res, new ReqError(msg ? msg : "资源不存在！", 404))
 }
-
+//返回结果
 export function sendOk(res: Response, data: any): void {
     res.send(JSON.stringify(data))
 }
-
 export function sendOK(res: Response, data: any): void {
     sendOk(res, data)
 }

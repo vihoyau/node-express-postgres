@@ -8,7 +8,6 @@ export async function sendSms(mobile: string) {
     let nonce = randomInt(100000, 999999)
     let str = `${smsOpt.app_secret}${nonce}${curTime}`
     let checkSum = createHash('sha1').update(str).digest("hex")
-
     let options = {
         url: smsOpt.url,
         headers: {
